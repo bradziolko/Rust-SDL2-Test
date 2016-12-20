@@ -23,6 +23,7 @@ Cargo.lock
 build/
 bin/
 lib/
+obj/*
 *.swp
 .project
 .DS_Store
