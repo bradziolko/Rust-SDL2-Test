@@ -6,3 +6,4 @@ authors = ["bziolko"]
 [dependencies]
 sdl2 = "0.25"
 sdl2_image = "0.25"
+sdl2_ttf = "0.25"
