@@ -2,47 +2,13 @@
 use phi::data::Rectangle;
 use phi::gfx::{CopySprite, Sprite};
 use sdl2::pixels::Color;
-use sdl2::render::Renderer;
+use views::shared::BgSet;
 
 const PLAYER_SPEED: f64 = 180.0;
 const SHIP_W: f64 = 43.0;
 const SHIP_H: f64 = 39.0;
 
 const DEBUG: bool = false;
-
-#[derive(Clone)]
-struct Background {
-    pos: f64,
-    vel: f64,
-    sprite: Sprite
-}
-
-impl Background {
-    fn render(&mut self, renderer: &mut Renderer, elapsed: f64) {
-        let size = self.sprite.size();
-        self.pos += self.vel * elapsed;
-
-        if self.pos > size.0 {
-            self.pos -= size.0;
-        }
-
-        let (win_w, win_h) = renderer.output_size().unwrap();
-        let scale = win_h as f64 / size.1;
-
-        let mut physical_left = -self.pos * scale;
-
-        while physical_left < win_w as f64 {
-            renderer.copy_sprite(&self.sprite, Rectangle {
-                x: physical_left,
-                y: 0.0,
-                w: size.0 * scale,
-                h: win_h as f64
-            });
-
-            physical_left += size.0 * scale;
-        }
-    }
-}
 
 #[derive(Clone, Copy)]
 enum ShipFrame {
@@ -66,14 +32,16 @@ struct Ship {
 //View Definition
 pub struct ShipView {
     player: Ship,
-
-    bg_back: Background,
-    bg_middle: Background,
-    bg_front: Background
+    bg: BgSet
 }
 
 impl ShipView {
     pub fn new(phi: &mut Phi) -> ShipView {
+        let bg = BgSet::new(&mut phi.renderer);
+        ShipView::with_backgrounds(phi, bg)
+    }
+
+    pub fn with_backgrounds(phi: &mut Phi, bg: BgSet) -> ShipView {
         let spritesheet = Sprite::load(&mut phi.renderer, "assets/spaceship.png").unwrap();
         let mut sprites = Vec::with_capacity(9);
 
@@ -99,22 +67,7 @@ impl ShipView {
                 sprites: sprites,
                 current: ShipFrame::MidNorm
             },
-
-            bg_back: Background {
-                pos: 0.0,
-                vel: 20.0,
-                sprite: Sprite::load(&mut phi.renderer, "assets/starBG.png").unwrap()
-            },
-            bg_middle: Background {
-                pos: 0.0,
-                vel: 40.0,
-                sprite: Sprite::load(&mut phi.renderer, "assets/starMG.png").unwrap()
-            },
-            bg_front: Background {
-                pos: 0.0,
-                vel: 80.0,
-                sprite: Sprite::load(&mut phi.renderer, "assets/starFG.png").unwrap()
-            }
+            bg: bg
         }
     }
 }
@@ -172,8 +125,8 @@ impl View for ShipView {
         phi.renderer.set_draw_color(Color::RGB(0, 0, 0));
         phi.renderer.clear();
 
-        self.bg_back.render(&mut phi.renderer, elapsed);
-        self.bg_middle.render(&mut phi.renderer, elapsed);
+        self.bg.back.render(&mut phi.renderer, elapsed);
+        self.bg.middle.render(&mut phi.renderer, elapsed);
 
         if DEBUG {
             phi.renderer.set_draw_color(Color::RGB(200, 200, 50));
@@ -184,7 +137,7 @@ impl View for ShipView {
             &self.player.sprites[self.player.current as usize],
             self.player.rect);
 
-        self.bg_front.render(&mut phi.renderer, elapsed);
+        self.bg.front.render(&mut phi.renderer, elapsed);
 
         ViewAction::None
     }
