@@ -24,20 +24,20 @@ struct_events! {
     }
 }
 
-pub struct Phi<'window> {
+pub struct Phi<'a> {
     pub events: Events,
-    pub renderer: Renderer<'window>,
-    pub ttf_context: Sdl2TtfContext,
+    pub renderer: Renderer<'a>,
+    pub ttf_context: &'a Sdl2TtfContext,
 
-    cached_fonts: HashMap<(&'static str, i32), ::sdl2_ttf::Font<'window>>
+    cached_fonts: HashMap<(&'static str, i32), ::sdl2_ttf::Font<'a>>
 }
 
-impl<'window> Phi<'window> {
-    fn new(events: Events, renderer: Renderer<'window>) -> Phi<'window> {
+impl<'a> Phi<'a> {
+    fn new(events: Events, renderer: Renderer<'a>, ttf_context: &'a Sdl2TtfContext) -> Phi<'a> {
         Phi {
             events: events,
             renderer: renderer,
-            ttf_context: ::sdl2_ttf::init().unwrap(),
+            ttf_context: ttf_context,//::sdl2_ttf::init().unwrap(),
             cached_fonts: HashMap::new()
         }
     }
@@ -79,7 +79,7 @@ where F: Fn(&mut Phi) -> Box<View> {
     let video = sdl_context.video().unwrap();
     let mut timer = sdl_context.timer().unwrap();
     let _image_context = ::sdl2_image::init(::sdl2_image::INIT_PNG).unwrap();
-    //let _ttf_context = ::sdl2_ttf::init().unwrap();
+    let _ttf_context = ::sdl2_ttf::init().unwrap();
 
     // Create the window
     let window = video.window(title, 800, 600)
@@ -90,7 +90,8 @@ where F: Fn(&mut Phi) -> Box<View> {
         Events::new(sdl_context.event_pump().unwrap()),
         window.renderer()
             .accelerated()
-            .build().unwrap());
+            .build().unwrap(),
+        &_ttf_context);
 
     let mut current_view = init(&mut context);
 
